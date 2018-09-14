@@ -6,7 +6,9 @@ const Province = require('../models/provinceSchema');
 const adSubmit = require('../models/adSchema');
 const City = require('../models/citySchema');
 const Fvt = require('../models/fvtSchema');
-
+const Msg = require('../models/msgSchema');
+const showNotification = require('../models/notificationSchema');
+const webPush = require('web-push')
 const fs = require('fs-extra')
 const formidable = require('formidable');
 
@@ -36,7 +38,7 @@ router.post('/addUser', (req, res) => {
 });
 
 router.post('/checkEmail', (req, res) => {
-    console.log('on server check email ',req.body.email);
+    console.log('on server check email ', req.body.email);
     const user = new User({ email: req.body.email });
     User.findOne({ email: req.body.email }, (err, result) => {
         if (err) {
@@ -131,7 +133,7 @@ router.post('/category/:cat_id', (req, res) => {
 
 router.post('/loginAds', (req, res) => {
     // console.log(req.body);
-    adSubmit.find({ userId : req.body.userId}).populate('catId provinceId', 'name').then(resp => { console.log(resp); res.json(resp) })
+    adSubmit.find({ userId: req.body.userId }).populate('catId provinceId', 'name').then(resp => { console.log(resp); res.json(resp) })
         .catch(err => res.send(err));
 });
 
@@ -187,6 +189,54 @@ router.delete('/deleteProduct', (req, res) => {
         res.send(result);
     })
 });
+
+router.post('/showAllMsg', (req, res) => {
+    // console.log(req.body);
+    Msg.find({ adId: req.body.adId })
+        .then(resp => { res.json(resp) }).catch(err => { res.send(err) })
+
+})
+
+const publickey = 'BD6seR_yd30FIlfbmmq2aeiJWJzGOQcKg--YXq2ol6Hhm3BiFFtYmTpNrnlcyeuoaeVz6TwIZT-MkOldNmPoIac';
+const privatekey = '5Y8HVZbG_gTGiaUYVRFsswUFBN3Uc3f-BMt3c4GSD14';
+webPush.setVapidDetails("mailto:test@test.com", publickey, privatekey);
+router.post('/addMsg', (req, res) => {
+    // console.log(req.body);
+    const reqData = {
+        userId: req.body.userId,
+        adId: req.body.adId,
+        name: req.body.senderName,
+        mobile: req.body.senderMobile,
+        msg: req.body.msg
+    }
+
+    // console.log('waow', reqData);
+    const msg = new Msg(reqData);
+    msg.save().then(record => {
+        if (record) {
+
+            adSubmit.findById({ _id: reqData.adId }, function (err, record) {
+                if (err) {
+                    res.send(err)
+                } else {
+                    showNotification.findOne({ userID: record.userId }, function (err, record) {
+                        if (err) {
+                            res.send(err)
+                        } else if (record) {
+                            const payload = JSON.stringify({ title: 'Push Test' })
+                            webPush.sendNotification(JSON.parse(record.subscription), payload)
+                                .catch((err) => console.log(err))
+                        }
+                    })
+
+                }
+            })
+            res.send(msg);
+        }
+
+
+    }).catch(err => res.send(err));
+})
 
 router.post('/adDetail', (req, res) => {
     // console.log(req.body.adId);
@@ -263,9 +313,27 @@ router.post('/adDetail', (req, res) => {
 });
 
 router.post('/myFvtAds', (req, res) => {
-    console.log('User id',req.body.userId);
+    console.log('User id', req.body.userId);
     Fvt.find({ userId: req.body.userId }).populate('adId')
-    .then(resp => { console.log(resp); res.json(resp)}).catch(err => { res.send(err)})
+        .then(resp => { console.log(resp); res.json(resp) }).catch(err => { res.send(err) })
 });
+
+router.post('/getNotification', function (req, res) {
+    console.log("notifiy", req.body)
+
+    var saveSubscription = new showNotification();
+    saveSubscription.userID = req.body.userID;
+    saveSubscription.subscription = JSON.stringify(req.body.subscribeUser);
+    saveSubscription.save(function (err, record) {
+        if (err) {
+            res.json(err)
+        }
+        else {
+            res.json('ok bhai ')
+        }
+    })
+
+
+})
 
 module.exports = router;

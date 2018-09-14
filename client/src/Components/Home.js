@@ -34,6 +34,36 @@ class Home extends Component {
         return (
             <div>
                 {/* Search bar */}
+
+                {/* start */}
+                <nav className="navbar navbar-default header-nav" >
+                    <div className="container-fluid">
+
+                        <div className="row">
+
+                            {/* <ul className="nav navbar-nav "> */}
+                            <div className="col-md-2"></div>
+                            <div className="dropdown col-md-2 " >
+                                <a href="#" className="dropdown-toggle btn btn-default btn-md form-control" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span className="glyphicon glyphicon-user"></span> Category <span className="caret"></span></a>
+                                <ul className="dropdown-menu">
+                                    {categories.map((category, index) => {
+                                        return (
+                                            <li key={index}><Link to={`/category/${category._id}`}>
+                                                <FontAwesome name="xyz" className={category.image} size='1x' />&nbsp;<span>{category.name}</span>
+                                            </Link></li>
+                                        )
+                                    }
+                                    )}
+                                </ul>
+                            </div>
+                            <div className="col-md-5"><input type="text" className="form-control" /></div>
+                            <div className="col-md-2"><Link to='/' className="btn btn-default btn-md">Search</Link></div>
+                            <div className="col-md-1"></div>
+                            {/* </ul> */}
+                        </div>
+                    </div>
+                </nav>
+                {/*  end*/}
                 {/* <div className="row">
                     <div className="col-md-12">
                         <div>

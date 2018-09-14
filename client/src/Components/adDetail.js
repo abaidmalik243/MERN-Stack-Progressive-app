@@ -7,6 +7,9 @@ class AdDetail extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            senderName: '',
+            senderMobile: '',
+            msg: '',
             adId: this.props.match.params.id,
             loginDetail: JSON.parse(localStorage.getItem('loginDetail') || "{}"),
             checkFvtBtn: 'T',
@@ -51,6 +54,63 @@ class AdDetail extends Component {
                 }
             }).catch(err => console.log(err));
 
+    }
+
+    sendAdMsg = (e) => {
+        e.preventDefault();
+        // debugger;
+        // alert('good');
+        console.log('abc')
+
+        const { senderName, senderMobile, msg } = this.state;
+        // console.log('Sender Name: ',senderName);
+        // console.log('Sender Name: ',senderMobile);
+        // console.log('Sender Name: ',msg);
+
+        const adId = this.state.adId;
+        // console.log(testId);
+        if (adId && this.state.loginDetail._id) {
+            const msgData = {
+                adId: adId,
+                userId: this.state.loginDetail._id,
+                senderName: senderName,
+                senderMobile: senderMobile,
+                msg: msg
+            }
+            axios.post('/api/olx/addMsg', msgData)
+                .then(res => {
+                    if (res.data !== null) {
+                        alert('successfully add New message');
+                    } else {
+                        // alert('This ad id and user id is already exist');
+                    }
+                }).catch(err => console.log(err));
+        } else {
+            alert('Please login first to send your message.');
+        }
+
+
+
+
+    }
+
+    _changeHandler = (e) => {
+        const state = this.state;
+        state[e.target.name] = e.target.value;
+        this.setState({
+            state
+        });
+    }
+
+    _checkLogin = () => {
+        const userId = this.state.loginDetail._id;
+        if (userId) {
+            console.log('check id: ',userId);
+        }else{
+            alert('Pleases Loing first to send your message');
+            document.getElementById('myMsgModal').style.display = 'none';
+            console.log('not login')
+        }
     }
 
     _addFavorite = (adId) => {
@@ -147,7 +207,10 @@ class AdDetail extends Component {
                                             <p className="btn btn-info" onClick={() => { this._addFavorite(this.state.adDetail._id) }}>Add to Favorite</p>
                                             :
                                             <p className="btn btn-warning" onClick={() => { this._removeFavorite(this.state.adDetail._id) }}> Remove from Favorite</p>
-                                        }
+                                        }&nbsp;
+                                        {this.state.loginDetail !== null ?
+                                            <p className="btn btn-success" data-toggle="modal" data-target="#myMsgModal" > Send Message </p>
+                                            : <div></div>}
                                         {/* <p className="btn btn-success">Send message to Seller</p> */}
                                     </center></div><br />
                                 </div>
@@ -155,6 +218,45 @@ class AdDetail extends Component {
                         </div>
                         : <div>Not found</div>}
                 </div>
+
+                {/* Start Modal */}
+                <div className="modal fade" id="myMsgModal" role="dialog">
+                    <div className="modal-dialog modal-md">
+
+                        {/* Modal content */}
+                        <center>
+                            <div className="modal-content">
+                                <div className="modal-header">
+                                    <button type="button" className="close" data-dismiss="modal">&times;</button>
+                                    <h4 className="modal-title"> Send Message </h4>
+                                </div>
+                                <form onSubmit={this.sendAdMsg} method="POST" id='addmsg' ref={(el) => this.msgForm = el}>
+                                    <div className="modal-body">
+                                        <div className="">
+                                            <div className="row">
+                                                <div className="col-md-2"><label>Name: </label></div>
+                                                <div className="col-md-10"><input type="text" onChange={this._changeHandler} className="form-control" name="senderName" /></div>
+                                                <hr />
+                                                <div className="col-md-2"><label>Mobile: </label></div>
+                                                <div className="col-md-10"><input type="text" onChange={this._changeHandler} className="form-control" name="senderMobile" /></div>
+                                                <hr /><br />
+                                                <div className="col-md-2"><label>Message: </label></div>
+                                                <div className="col-md-10"><textarea name="msg" onChange={this._changeHandler} className="form-control"></textarea></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="modal-footer">
+                                        <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
+                                        <button type="submit" onClick={this.sendAdMsg} className="btn btn-success" data-dismiss="modal" >Send</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </center>
+                        {/* end modal content */}
+
+                    </div>
+                </div>
+                {/* end model */}
             </div>
         )
     }

@@ -137,10 +137,86 @@
     '/bootstrap/js/bootstrap.min.js',
     '/static/js/bundle.js'
   ]);
+  console.log('service worker loading')
+
+  // global.addEventListener('push', e => {
+  //   const data = e.data.json()
+  //   console.log("push recieved")
+  //   self.registration.showNotification(data.title, {
+  //     body: 'Notify Me Thanks'
+  //   })
+  // })
   // By default, all requests that don't match our custom handler will use the
   // toolbox.networkFirst cache strategy, and their responses will be stored in
   // the default cache.
   global.toolbox.router.default = global.toolbox.networkFirst;
+
+
+  const applicationServerPublicKey = '  BOlS1u1Xpb94glJEY2MgwDwt0fjiZ1COXjgRWIzvPXg7Hyb-03nqTbM8OGz4w5WpZXxQTSY8sEd925rtSmdG9Ng';
+  // BKad5TvgT8qcDBafrkMlAEGmUN4tMqYMdKVmeHahnkBhVDQMYYQTW4NRGjXKtOW9UZ1LaYuR_C303wb9M-z2PyE
+  /* eslint-enable max-len */
+  
+  function urlB64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/\-/g, '+')
+      .replace(/_/g, '/');
+  
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+  
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+  
+  global.addEventListener('push', function(event) {
+    console.log('[Service Worker] Push Received.');
+    console.log(`[Service Worker] Push had this data: "${event.data.text()}"`);
+  
+    const title = 'Push Codelab';
+    const options = {
+      body: 'You Have New Message',
+      // icon: 'images/icon.png',
+      // badge: 'images/badge.png'
+    };
+  
+    event.waitUntil(global.registration.showNotification(title, options));
+  });
+  
+  global.addEventListener('notificationclick', function(event) {
+    console.log('[Service Worker] Notification click Received.');
+  
+    event.notification.close();
+  
+    event.waitUntil(
+      clients.openWindow('http://localhost:3000/loginAds')
+    );
+  });
+  
+  global.addEventListener('pushsubscriptionchange', function(event) {
+    console.log('[Service Worker]: \'pushsubscriptionchange\' event fired.');
+    const applicationServerKey = urlB64ToUint8Array(applicationServerPublicKey);
+    event.waitUntil(
+      global.registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: applicationServerKey
+      })
+      .then(function(newSubscription) {
+        // TODO: Send to application server
+        console.log('[Service Worker] New subscription: ', newSubscription);
+      })
+    );
+  });
+  
+
+
+
+
+
+
+
 
   // Boilerplate to ensure our service worker takes control of the page as soon
   // as possible.

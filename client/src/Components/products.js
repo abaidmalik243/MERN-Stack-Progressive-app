@@ -2,16 +2,26 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
+
+function searchingFor(searchText) {
+    return function (x) {
+        return x.titleAd.toLowerCase().includes(searchText.toLowerCase()) || !searchText;
+    }
+}
+
 class Products extends Component {
     constructor(props) {
         super(props);
         this.state = {
             Products: [],
+            searchText: '',
             myCatId: this.props.match.params.cat_id,
             delId: '',
             titleAd: '',
             userName: ''
         }
+
+        this.searchHandler = this.searchHandler.bind(this);
 
         axios.post('/api/olx/category/:cat_id', { cat_id: this.state.myCatId })
             .then(res => {
@@ -25,7 +35,7 @@ class Products extends Component {
         }
     }
 
-    DeleteBook = (id) => {
+    DeleteAd = (id) => {
         // alert('you are in delete function');
         axios.delete('/api/olx/deleteProduct', { data: { id: id } })
             .then(res => {
@@ -41,12 +51,24 @@ class Products extends Component {
 
     }
 
+    searchHandler(event) {
+        this.setState({ searchText: event.target.value })
+    }
+
 
 
     render() {
         const { Products } = this.state;
         return (
             <div>
+                <form>
+                    <div className="row">
+                        <div className="col-md-4 col-md-offset-8">
+                            <input type="text" placeholder="Search..." className="form-control" onChange={this.searchHandler} value={this.state.searchText} />
+                        </div>
+                    </div>
+
+                </form>
                 <table className="table table-responsive">
                     <thead>
                         <tr>
@@ -63,7 +85,7 @@ class Products extends Component {
                     <tbody>
                         {
                             Products.length > 0 ?
-                                Products.map((product, index) => {
+                                Products.filter(searchingFor(this.state.searchText)).map((product, index) => {
                                     return (
                                         <tr key={index}>
                                             <td>{++index}</td>
@@ -108,7 +130,7 @@ class Products extends Component {
                                 </div>
                                 <div className="modal-footer">
                                     <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
-                                    <button type="button" className="btn btn-danger" data-dismiss="modal" onClick={() => this.DeleteBook(this.state.delId)}>Delete</button>
+                                    <button type="button" className="btn btn-danger" data-dismiss="modal" onClick={() => this.DeleteAd(this.state.delId)}>Delete</button>
                                 </div>
                             </div>
                         </center>
